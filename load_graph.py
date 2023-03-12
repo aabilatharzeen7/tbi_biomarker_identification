@@ -1,11 +1,12 @@
 import dgl
+import numpy as np
 import torch as th
 import dgl
 from dgl.data import DGLDataset
 import torch
 import networkx as nx
 import config as cnf
-
+import pandas as pd
 class PLCgraphDataset(DGLDataset):
 
     def __init__(self):
@@ -21,12 +22,49 @@ class PLCgraphDataset(DGLDataset):
         self.graph.ndata['feat'] = self.graph.ndata['feature']
         self.graph.ndata['label'] = self.graph.ndata['label']
 
+        #
+        # train_id, test_id = sk.train_test_split(range(self.graph.num_nodes()), test_size=0.3, shuffle=True,
+        #                                         random_state=40)
+        # train_id, val_id = sk.train_test_split(train_id, test_size=0.20, shuffle=True, random_state=40)
+        #
+        #
+        # train_mask = torch.zeros(n_nodes, dtype=torch.bool)
+        # val_mask = torch.zeros(n_nodes, dtype=torch.bool)
+        # test_mask = torch.zeros(n_nodes, dtype=torch.bool)
+
+
+        label = {'name': ['Apoe', 'Egfr', 'Clu', 'Grn', 'Vtn', 'Lrp1', 'Gsn', 'Reln', 'Mup12', 'Mup19', 'Mug1', 'Lifr',
+                          'Itih1', 'Hgfac', 'Ubtfl1', 'Orm2', 'Spp2', 'Amy2a2'],
+                 'value': [0.3125, 0.3125, 0.5, 0.375, 0.1875, 0.5625, 0.1875, 0.1875, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+
+        label_data = pd.DataFrame(data=label)
+        train_list = label_data.sample(n=None, frac= int(np.ceil(label_data.count() * 0.06)), replace=False, weights=None, random_state=None, axis=None)
+
+        id = 0
+        for u in self.graph.nodes():
+            temp_name = u
+            if train_list.count(temp_name):
+                train_mask[id] = True
+
+            id = id+1
+
+
+
+
+        train_mask[train_id] = True
+        val_mask[val_id] = True
+        test_mask[test_id] = True
+        self.graph.ndata['train_mask'] = train_mask
+        self.graph.ndata['val_mask'] = val_mask
+        self.graph.ndata['test_mask'] = test_mask
+
         n_nodes = self.graph.num_nodes()
-        n_train = int(n_nodes * 0.85)
-        n_val = int(n_nodes * 0.15)
+        n_train = int(np.ceil(n_nodes * 0.06))
+        n_val = int(np.ceil(n_nodes * 0.02))
         train_mask = torch.zeros(n_nodes, dtype=torch.bool)
         val_mask = torch.zeros(n_nodes, dtype=torch.bool)
         test_mask = torch.zeros(n_nodes, dtype=torch.bool)
+
         train_mask[:n_train] = True
         val_mask[n_train:n_train + n_val] = True
         test_mask[n_train + n_val:] = True
