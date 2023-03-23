@@ -7,6 +7,7 @@ import torch
 import networkx as nx
 import config as cnf
 import pandas as pd
+import pickle
 class PLCgraphDataset(DGLDataset):
 
     def __init__(self):
@@ -17,10 +18,14 @@ class PLCgraphDataset(DGLDataset):
         filepath = cnf.modelpath + '\TBI.pkl'
 
         g = nx.read_gpickle(filepath)
+        filepath = cnf.modelpath + 'modified_proteins'
+        with open(filepath, 'rb') as f:
+            modified_proteins= pickle.load(f)
 
         self.graph = dgl.from_networkx(g, node_attrs=['feature','label'])
         self.graph.ndata['feat'] = self.graph.ndata['feature']
         self.graph.ndata['label'] = self.graph.ndata['label']
+        n_nodes= 206
 
         #
         # train_id, test_id = sk.train_test_split(range(self.graph.num_nodes()), test_size=0.3, shuffle=True,
@@ -28,9 +33,9 @@ class PLCgraphDataset(DGLDataset):
         # train_id, val_id = sk.train_test_split(train_id, test_size=0.20, shuffle=True, random_state=40)
         #
         #
-        # train_mask = torch.zeros(n_nodes, dtype=torch.bool)
-        # val_mask = torch.zeros(n_nodes, dtype=torch.bool)
-        # test_mask = torch.zeros(n_nodes, dtype=torch.bool)
+        train_mask = torch.zeros(n_nodes, dtype=torch.bool)
+        val_mask = torch.zeros(n_nodes, dtype=torch.bool)
+        test_mask = torch.zeros(n_nodes, dtype=torch.bool)
 
 
         label = {'name': ['Apoe', 'Egfr', 'Clu', 'Grn', 'Vtn', 'Lrp1', 'Gsn', 'Reln', 'Mup12', 'Mup19', 'Mug1', 'Lifr',
@@ -38,44 +43,49 @@ class PLCgraphDataset(DGLDataset):
                  'value': [0.3125, 0.3125, 0.5, 0.375, 0.1875, 0.5625, 0.1875, 0.1875, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
 
         label_data = pd.DataFrame(data=label)
-        train_list = label_data.sample(n=None, frac= int(np.ceil(label_data.count() * 0.06)), replace=False, weights=None, random_state=None, axis=None)
+        train_list = label_data.sample(n=np.int(np.ceil(label_data.count() * 0.6)[1]), frac= None, replace=False, weights=None, random_state=None, axis=None)
+        val_list = pd.concat([label_data,train_list]).drop_duplicates(keep=False)
 
         id = 0
         for u in self.graph.nodes():
-            temp_name = u
-            if train_list.count(temp_name):
+            print(u.numpy())
+            temp_id = u.numpy().item()
+            temp_name = modified_proteins.iloc[np.where(temp_id==modified_proteins.id)[0],0].to_numpy()[0]
+            if (train_list['name'].eq(temp_name)).any():
                 train_mask[id] = True
+            elif (val_list['name'].eq(temp_name)).any():
+                val_mask[id] = True
+            else:
+                test_mask[id] = True
 
             id = id+1
 
 
 
 
-        train_mask[train_id] = True
-        val_mask[val_id] = True
-        test_mask[test_id] = True
+
         self.graph.ndata['train_mask'] = train_mask
         self.graph.ndata['val_mask'] = val_mask
         self.graph.ndata['test_mask'] = test_mask
 
-        n_nodes = self.graph.num_nodes()
-        n_train = int(np.ceil(n_nodes * 0.06))
-        n_val = int(np.ceil(n_nodes * 0.02))
-        train_mask = torch.zeros(n_nodes, dtype=torch.bool)
-        val_mask = torch.zeros(n_nodes, dtype=torch.bool)
-        test_mask = torch.zeros(n_nodes, dtype=torch.bool)
-
-        train_mask[:n_train] = True
-        val_mask[n_train:n_train + n_val] = True
-        test_mask[n_train + n_val:] = True
-        self.graph.ndata['train_mask'] = train_mask
-        self.graph.ndata['val_mask'] = val_mask
-        self.graph.ndata['test_mask'] = test_mask
+        # n_nodes = self.graph.num_nodes()
+        # n_train = int(np.ceil(n_nodes * 0.06))
+        # n_val = int(np.ceil(n_nodes * 0.02))
+        # train_mask = torch.zeros(n_nodes, dtype=torch.bool)
+        # val_mask = torch.zeros(n_nodes, dtype=torch.bool)
+        # test_mask = torch.zeros(n_nodes, dtype=torch.bool)
+        #
+        # train_mask[:n_train] = True
+        # val_mask[n_train:n_train + n_val] = True
+        # test_mask[n_train + n_val:] = True
+        # self.graph.ndata['train_mask'] = train_mask
+        # self.graph.ndata['val_mask'] = val_mask
+        # self.graph.ndata['test_mask'] = test_mask
 
     @property
     def num_classes(self):
         r"""Number of classes for each node."""
-        return 1
+        return 7
 
     def __getitem__(self, i):
         return self.graph

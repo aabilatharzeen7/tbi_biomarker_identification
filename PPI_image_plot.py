@@ -50,17 +50,18 @@ vmin = df['color'].min()
 vmax = df['color'].max()
 cmap = plt.cm.coolwarm
 
-
+edges, weights = zip(*nx.get_edge_attributes(G, 'feature').items())
 # Draw complete graph and the second draw just for edge with labels
-nx.draw_networkx(G, pos=layout,  with_labels=True, node_color=color_map, font_color='black',edge_color= 'grey',width =0.5,font_size=6,node_size = 500)
+nx.draw_networkx(G, pos=layout,  with_labels=True, node_color=color_map , font_color='black',width =0.5,font_size=6,node_size = 500)
 # nx.draw_networkx(G, pos=layout,  with_labels=True, node_color=df['color'],cmap=cmap, vmin=vmin, vmax=vmax, font_color='white',edge_color= 'grey',width =0.5,font_size=6,node_size = 500)
 
-nx.draw_networkx_edge_labels(G, pos=layout,edge_labels=edge_labels ,font_color='red',font_size=3)
+# nx.draw_networkx_edge_labels(G, pos=layout,edge_color=edge_labels ,font_color='red',font_size=3)
 
-
+nx.draw_networkx_edges(G = G, pos = layout, edge_color='k', alpha=0.6, width=weights)
 # sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
 # sm.set_array([])
 # cbar = plt.colorbar(sm,shrink=0.5)
-plt.show(block=False)
+plt.show()
+# plt.show(block=False)
 
 plt.savefig('PPI.png', format= 'png',dpi=1200)

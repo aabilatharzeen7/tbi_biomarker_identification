@@ -70,9 +70,9 @@ def evaluate(model, test_nfeat, test_labels, device, dataloader, loss_fcn):
             # Compute loss and prediction
             batch_pred = model(blocks, batch_inputs)
 
-            temp_pred = th.argmax(batch_pred, dim=1)
-            current_acc = accuracy_score(batch_labels.cpu().detach().numpy(), temp_pred.cpu().detach().numpy() )
-            test_acc = test_acc + ((1 / (step + 1)) * (current_acc - test_acc))
+            # temp_pred = th.argmax(batch_pred, dim=1)
+            # current_acc = accuracy_score(batch_labels.cpu().detach().numpy(), temp_pred.cpu().detach().numpy() )
+            # test_acc = test_acc + ((1 / (step + 1)) * (current_acc - test_acc))
 
             # cnfmatrix = confusion_matrix(batch_labels.cpu().detach().numpy(), temp_pred.cpu().detach().numpy())
             # class1acc = class1acc + ((1 / (step + 1)) * (cnfmatrix[0][0] / np.sum(cnfmatrix[0, :]) - class1acc))
@@ -83,11 +83,11 @@ def evaluate(model, test_nfeat, test_labels, device, dataloader, loss_fcn):
             # test_acc = test_acc + correct
 
             loss = loss_fcn(batch_pred, batch_labels)
-            test_loss = test_loss + ((1 / (step + 1)) * (loss.data - test_loss))
+            # test_loss = test_loss + ((1 / (step + 1)) * (loss.data - test_loss))
 
     model.train() # rechange the model mode to training
 
-    return test_acc, test_loss
+    return loss
 
 def load_subtensor(nfeat, labels, seeds, input_nodes, device):
     """
@@ -119,7 +119,7 @@ def run(args, device, data, checkpoint_path, best_model_path):
     n_classes, train_g, val_g, test_g, train_nfeat, train_labels, \
     val_nfeat, val_labels, test_nfeat, test_labels = data
 
-    in_feats = 10
+    in_feats = 29
     # in_feats = train_nfeat.shape[0]
 
     train_nid = th.nonzero(train_g.ndata['train_mask'], as_tuple=True)[0]
@@ -195,29 +195,27 @@ def run(args, device, data, checkpoint_path, best_model_path):
             # train_loss = train_loss + ((1 / (step + 1)) * (loss.data - train_loss))
 
         model.eval()
-        train_acc, train_loss = evaluate(model, train_nfeat,train_labels,device, dataloader,loss_fcn)
-        val_acc, valid_loss = evaluate(model, val_nfeat, val_labels,device, valdataloader, loss_fcn)
+        train_loss = evaluate(model, train_nfeat,train_labels,device, dataloader,loss_fcn)
+        val_loss= evaluate(model, val_nfeat, val_labels,device, valdataloader, loss_fcn)
 
-        print('Epoch: {} \tTraining acc: {:.6f} \tValidation acc: {:.6f} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}'.format(
+        print('Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}'.format(
             epoch,
-            train_acc,
-            val_acc,
+            val_loss,
             train_loss,
-            valid_loss
             ))
 
         checkpoint = {
-            'valid_loss_min': valid_loss,
+            'valid_loss_min': val_loss,
             'state_dict': model.state_dict(),
         }
 
         save_ckp(checkpoint, False, checkpoint_path, best_model_path)
 
         # TODO: save the model if validation loss has decreased
-        if valid_loss <= valid_loss_min:
-            print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min, valid_loss))
+        if val_loss <= valid_loss_min:
+            print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min, val_loss))
             save_ckp(checkpoint, True, checkpoint_path, best_model_path)
-            valid_loss_min = valid_loss
+            valid_loss_min = val_loss
 
 if __name__ == '__main__':
 

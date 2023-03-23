@@ -25,6 +25,11 @@ class SAGE(nn.Module):
         else:
             self.layers.append(dglnn.SAGEConv(in_feats, n_classes, 'pool'))
 
+        self.regression =  nn.Sequential(
+                                    nn.Linear(7,1),
+                                    # nn.ReLU(),
+                                    # nn.Linear(24, 1),
+                                )
         self.dropout = nn.Dropout(dropout)
         self.activation = activation
 
@@ -35,6 +40,7 @@ class SAGE(nn.Module):
             if l != len(self.layers) - 1:
                 h = self.activation(h)
                 h = self.dropout(h)
+        h = self.regression(h)
         return h
 
     def inference(self, g, x, device, batch_size, num_workers):
