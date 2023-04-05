@@ -18,17 +18,22 @@ class SAGE(nn.Module):
         self.n_classes = n_classes
         self.layers = nn.ModuleList()
         if n_layers > 1:
-            self.layers.append(dglnn.SAGEConv(in_feats, n_hidden, 'pool'))
-            for i in range(1, n_layers - 1):
-                self.layers.append(dglnn.SAGEConv(n_hidden, n_hidden, 'pool'))
-            self.layers.append(dglnn.SAGEConv(n_hidden, n_classes, 'pool'))
-        else:
-            self.layers.append(dglnn.SAGEConv(in_feats, n_classes, 'pool'))
+            self.layers.append(dglnn.SAGEConv(in_feats, 64, 'pool'))
+            self.layers.append(dglnn.SAGEConv(64, 32, 'pool'))
+            self.layers.append(dglnn.SAGEConv(32, 16, 'pool'))
+
+            # for i in range(1, n_layers - 1):
+            #     self.layers.append(dglnn.SAGEConv(n_hidden, n_hidden, 'pool'))
+            # self.layers.append(dglnn.SAGEConv(n_hidden, n_classes, 'pool'))
+        # else:
+        #     self.layers.append(dglnn.SAGEConv(in_feats, n_classes, 'pool'))
 
         self.regression =  nn.Sequential(
-                                    nn.Linear(7,1),
-                                    # nn.ReLU(),
+                                    nn.Linear(16,1),
+                                    nn.Softmax(),
                                     # nn.Linear(24, 1),
+                                    # nn.Sigmoid()
+
                                 )
         self.dropout = nn.Dropout(dropout)
         self.activation = activation
