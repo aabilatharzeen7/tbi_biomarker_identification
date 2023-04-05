@@ -48,7 +48,6 @@ class PLCgraphDataset(DGLDataset):
 
         id = 0
         for u in self.graph.nodes():
-            print(u.numpy())
             temp_id = u.numpy().item()
             temp_name = modified_proteins.iloc[np.where(temp_id==modified_proteins.id)[0],0].to_numpy()[0]
             if (train_list['name'].eq(temp_name)).any():
@@ -85,7 +84,7 @@ class PLCgraphDataset(DGLDataset):
     @property
     def num_classes(self):
         r"""Number of classes for each node."""
-        return 7
+        return 16
 
     def __getitem__(self, i):
         return self.graph
@@ -109,6 +108,7 @@ def inductive_split(g):
     and validation masks.  Suitable for inductive models."""
 
     train_g = g.subgraph(g.ndata['train_mask'])
-    val_g = g.subgraph(g.ndata['train_mask'] | g.ndata['val_mask'])
-    test_g = g
+    val_g = g.subgraph(g.ndata['val_mask'])
+    # val_g = g.subgraph(g.ndata['train_mask'] | g.ndata['val_mask'])
+    test_g = g.subgraph(g.ndata['test_mask'])
     return train_g, val_g, test_g

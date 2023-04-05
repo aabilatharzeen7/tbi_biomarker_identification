@@ -18,7 +18,7 @@ list_ = ['Apoe','Clu','Lrp1','Reln','Lifr',  'Orm2', 'Hgfac','Hpx','Apoc1','Pltp
 df = {'node':['Apoe','Clu','Lrp1','Reln','Lifr',  'Orm2', 'Hgfac','Hpx','Apoc1','Pltp','Hspa5','Serpinf2','Pzp','Thbs1','Cpn2','Fn1','Gapdh','Igfals','Azgp1','C1qa','C1s1','C3','F12','Bche','Col1a1','Efemp1','F13b','Mup18','Plg','Gpx3'],
 'color':[0.3125,0.5,0.5625,0.1875,0,0,0,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5]}
 
-color_map = ['salmon','orangered','red','deepskyblue','blue','blue','blue','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow']
+color_map_nodes = ['salmon','orangered','red','deepskyblue','blue','blue','blue','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow','yellow']
 
 # df = {'node':['Apoe','Clu','Lrp1','Reln','Lifr',  'Orm2', 'Hgfac','Hpx','Apoc1','Pltp','Hspa5','Serpinf2','Pzp','Thbs1','Cpn2','Fn1','Gapdh','Igfals','Azgp1','C1qa','C1s1','C3','F12','Bche','Col1a1','Efemp1','F13b','Mup18','Plg','Gpx3'],
 # 'color':[0.3125,0.5,0.5625,0.1875,0.1,0.1,0.1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
@@ -52,16 +52,42 @@ cmap = plt.cm.coolwarm
 
 edges, weights = zip(*nx.get_edge_attributes(G, 'feature').items())
 # Draw complete graph and the second draw just for edge with labels
-nx.draw_networkx(G, pos=layout,  with_labels=True, node_color=color_map , font_color='black',width =0.5,font_size=6,node_size = 500)
+nx.draw_networkx(G, pos=layout,  with_labels=True, node_color=color_map_nodes , font_color='black',font_weight = 'bold',width =0.5,font_size=6,node_size = 500)
+
+
+
+############################## Edge Plots #####################################################
+## Grey edge and label
 # nx.draw_networkx(G, pos=layout,  with_labels=True, node_color=df['color'],cmap=cmap, vmin=vmin, vmax=vmax, font_color='white',edge_color= 'grey',width =0.5,font_size=6,node_size = 500)
 
+
+## Edge label
 # nx.draw_networkx_edge_labels(G, pos=layout,edge_color=edge_labels ,font_color='red',font_size=3)
 
-nx.draw_networkx_edges(G = G, pos = layout, edge_color='k', alpha=0.6, width=weights)
+
+## Line weight
+# nx.draw_networkx_edges(G = G, pos = layout, edge_color='k', alpha=0.6, width=weights)
+
+## Edge color
+
+options = {
+    "edge_color": weights,
+    "width":0.6,
+    "edge_cmap": plt.cm.Dark2,
+}
+# nx.draw_networkx_edges(G,  pos = layout, edge_color=weights,width =0.5)
+nx.draw_networkx_edges(G, pos = layout, **options)
+
 # sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
 # sm.set_array([])
 # cbar = plt.colorbar(sm,shrink=0.5)
-plt.show()
+
+
+# plt.show()
+
+
+
 # plt.show(block=False)
 
-plt.savefig('PPI.png', format= 'png',dpi=1200)
+# plt.savefig('PPI_1.png', format= 'png',dpi=1200)
+plt.show()
