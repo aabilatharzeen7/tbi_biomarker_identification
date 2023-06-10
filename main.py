@@ -190,7 +190,8 @@ def run(args, device, data, checkpoint_path, best_model_path):
     n_classes, train_g, val_g, test_g, train_nfeat, train_labels, \
     val_nfeat, val_labels, test_nfeat, test_labels = data
 
-    in_feats = 29
+    in_feats = 11
+    # in_feats = 11    # round 2
     # in_feats = train_nfeat.shape[0]
 
     train_nid = th.nonzero(train_g.ndata['train_mask'], as_tuple=True)[0]
@@ -331,8 +332,8 @@ if __name__ == '__main__':
     argparser.add_argument('--num-epochs', type=int, default=200)
     argparser.add_argument('--num-hidden', type=int, default=32)
     argparser.add_argument('--num-layers', type=int, default=2)
-    argparser.add_argument('--fan-out', type=str, default='50, 50, 50')
-    argparser.add_argument('--batch-size', type=int, default=207)
+    argparser.add_argument('--fan-out', type=str, default='60,65,65')
+    argparser.add_argument('--batch-size', type=int, default=149)
     argparser.add_argument('--log-every', type=int, default=20)
     argparser.add_argument('--eval-every', type=int, default=5)
     argparser.add_argument('--lr', type=float, default=0.001)
@@ -356,7 +357,7 @@ if __name__ == '__main__':
         device = th.device('cpu')
 
     fileext = "g6k"
-    filepath = cnf.modelpath +'\TBI.pkl'
+    filepath = cnf.modelpath +'\TBI_t1.pkl'
 
     # changes
     if args.dataset == 'PLC':
@@ -397,6 +398,6 @@ if __name__ == '__main__':
     data = n_classes, train_g, val_g, test_g, train_nfeat, train_labels, \
            val_nfeat, val_labels, test_nfeat, test_labels
 
-    run(args, device, data, cnf.modelpath + "\\current_checkpoint_505050.pt", cnf.modelpath + "\\TBI_trained_505050.pt")
+    run(args, device, data, cnf.modelpath + "\\TBI_t1_current_checkpoint_606565.pt", cnf.modelpath + "\\TBI_t1_trained_606565.pt")
 
 
