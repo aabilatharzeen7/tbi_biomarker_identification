@@ -18,7 +18,7 @@ import random as rnd
 label = {'name':['Apoe','Egfr','Clu','Grn','Vtn','Lrp1','Gsn','Reln','Mup12', 'Mup19', 'Mug1', 'Lifr', 'Itih1', 'Hgfac', 'Ubtfl1', 'Orm2', 'Spp2', 'Amy2a2'],'value':[0.3125,0.3125,0.5,0.375,0.1875,0.5625,0.1875,0.1875,0,0,0,0,0,0,0,0,0,0]}
 
 label_data = pd.DataFrame(data=label)
-df =pd.read_csv('string_interactions_short_combined.tsv',sep='\t')
+df =pd.read_csv('string_interactions_round_2.tsv',sep='\t')
 
 
 
@@ -27,7 +27,7 @@ df =pd.read_csv('string_interactions_short_combined.tsv',sep='\t')
 
 
 
-feat = pd.read_csv(cnf.datapath+'tbi_comb_norm_t1.csv')
+feat = pd.read_csv(cnf.datapath+'tbi_r2_t5_norm.csv')
 
 all_proteins = feat['name'].values.tolist()
 
@@ -93,7 +93,7 @@ for v1,v2 in G.edges:
 # Saving the graph to the data
 
 
-filepath  = cnf.modelpath+'TBI_t1.pkl'
+filepath  = cnf.modelpath+'TBI_t5.pkl'
 with open(filepath, 'wb') as f:
         pickle.dump(G, f)
 
