@@ -55,7 +55,7 @@ def run(args, device, data,trained_model_path):
 
     n_classes, test_g, test_nfeat, test_labels = data
 
-    in_feats = 29
+    in_feats = 10
 
     test_nid = th.nonzero(test_g.ndata['test_mask'], as_tuple=True)[0]
 
@@ -153,8 +153,8 @@ if __name__ == '__main__':
     argparser.add_argument('--num-epochs', type=int, default= 1)
     argparser.add_argument('--num-hidden', type=int, default=64)
     argparser.add_argument('--num-layers', type=int, default=2)
-    argparser.add_argument('--fan-out', type=str, default='60,70,80')
-    argparser.add_argument('--batch-size', type=int, default=206)
+    argparser.add_argument('--fan-out', type=str, default='55,60,65')
+    argparser.add_argument('--batch-size', type=int, default=196)
     argparser.add_argument('--log-every', type=int, default=20)
     argparser.add_argument('--eval-every', type=int, default=5)
     argparser.add_argument('--lr', type=float, default=0.001)
@@ -176,7 +176,7 @@ if __name__ == '__main__':
         device = th.device('cpu')
 
     fileext = "g6k"
-    filepath = cnf.modelpath +'\TBI.pkl'
+    filepath = cnf.modelpath +'\TBI_t6.pkl'
 
     filepath = cnf.modelpath + 'modified_proteins'
     with open(filepath, 'rb') as f:
@@ -201,7 +201,7 @@ if __name__ == '__main__':
 
     # Pack data
     data = n_classes, test_g,test_nfeat, test_labels
-    trained_model_path = cnf.modelpath + "\\TBI_trained_100f0_150_ep.pt"
+    trained_model_path = cnf.modelpath + "\\TBI_t6_trained_556065.pt"
     run(args, device, data,trained_model_path)
 
 

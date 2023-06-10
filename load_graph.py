@@ -15,7 +15,7 @@ class PLCgraphDataset(DGLDataset):
 
     def process(self):
 
-        filepath = cnf.modelpath + '\TBI.pkl'
+        filepath = cnf.modelpath + '\TBI_t1.pkl'
 
         g = nx.read_gpickle(filepath)
         filepath = cnf.modelpath + 'modified_proteins'
@@ -25,7 +25,9 @@ class PLCgraphDataset(DGLDataset):
         self.graph = dgl.from_networkx(g, node_attrs=['feature','label'])
         self.graph.ndata['feat'] = self.graph.ndata['feature']
         self.graph.ndata['label'] = self.graph.ndata['label']
-        n_nodes= 206
+        n_nodes= 149 # combined
+        # n_nodes= 196 # round 2
+        # n_nodes= 206  # round 1
 
         #
         # train_id, test_id = sk.train_test_split(range(self.graph.num_nodes()), test_size=0.3, shuffle=True,
