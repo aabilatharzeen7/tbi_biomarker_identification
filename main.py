@@ -14,11 +14,11 @@ from load_graph import load_plcgraph, inductive_split
 import pickle
 import warnings
 import shutil
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, classification_report
+# from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, classification_report
 warnings.filterwarnings("ignore")
 from torch.serialization import SourceChangeWarning
 warnings.filterwarnings("ignore", category=SourceChangeWarning)
-
+from matplotlib import pyplot as plt
 def compute_acc(pred, labels):
     """
     Compute the accuracy of prediction given the labels.
@@ -70,9 +70,9 @@ def evaluate(model, test_nfeat, test_labels, device, dataloader, loss_fcn):
             # Compute loss and prediction
             batch_pred = model(blocks, batch_inputs)
 
-            temp_pred = th.argmax(batch_pred, dim=1)
-            current_acc = accuracy_score(batch_labels.cpu().detach().numpy(), temp_pred.cpu().detach().numpy() )
-            test_acc = test_acc + ((1 / (step + 1)) * (current_acc - test_acc))
+            # temp_pred = th.argmax(batch_pred, dim=1)
+            # current_acc = accuracy_score(batch_labels.cpu().detach().numpy(), temp_pred.cpu().detach().numpy() )
+            # test_acc = test_acc + ((1 / (step + 1)) * (current_acc - test_acc))
 
             # cnfmatrix = confusion_matrix(batch_labels.cpu().detach().numpy(), temp_pred.cpu().detach().numpy())
             # class1acc = class1acc + ((1 / (step + 1)) * (cnfmatrix[0][0] / np.sum(cnfmatrix[0, :]) - class1acc))
@@ -83,12 +83,83 @@ def evaluate(model, test_nfeat, test_labels, device, dataloader, loss_fcn):
             # test_acc = test_acc + correct
 
             loss = loss_fcn(batch_pred, batch_labels)
-            test_loss = test_loss + ((1 / (step + 1)) * (loss.data - test_loss))
+            # test_loss = test_loss + ((1 / (step + 1)) * (loss.data - test_loss))
 
     model.train() # rechange the model mode to training
 
-    return test_acc, test_loss
+    return loss
 
+def test_(model, test_nfeat, test_labels, device, dataloader, loss_fcn):
+
+    """
+    Evaluate the model on the given data set specified by ``val_nid``.
+    g : The entire graph.
+    inputs : The features of all the nodes.
+    labels : The labels of all the nodes.
+    val_nid : the node Ids for validation.
+    device : The GPU device to evaluate on.
+    """
+    model.eval() # change the mode
+
+    test_acc = 0.0
+    test_loss = 0.0
+    # pred =[]
+    # act = []
+
+    for step, (input_nodes, seeds, blocks) in enumerate(dataloader):
+        with th.no_grad():
+            # Load the input features of all the required input nodes as well as output labels of seeds node in a batch
+            batch_inputs, batch_labels = load_subtensor(test_nfeat, test_labels,
+                                                        seeds, input_nodes, device)
+
+            blocks = [block.int().to(device) for block in blocks]
+
+            # Compute loss and prediction
+            batch_pred = model(blocks, batch_inputs)
+
+            # temp_pred = th.argmax(batch_pred, dim=1)
+            # current_acc = accuracy_score(batch_labels.cpu().detach().numpy(), temp_pred.cpu().detach().numpy() )
+            # test_acc = test_acc + ((1 / (step + 1)) * (current_acc - test_acc))
+
+            # cnfmatrix = confusion_matrix(batch_labels.cpu().detach().numpy(), temp_pred.cpu().detach().numpy())
+            # class1acc = class1acc + ((1 / (step + 1)) * (cnfmatrix[0][0] / np.sum(cnfmatrix[0, :]) - class1acc))
+
+            # print(cnfmatrix)
+
+            # correct = temp_pred.eq(batch_labels)
+            # test_acc = test_acc + correct
+
+            loss = loss_fcn(batch_pred, batch_labels)
+            # test_loss = test_loss + ((1 / (step + 1)) * (loss.data - test_loss))
+            pred=batch_pred
+            # pred.append(batch_pred)
+            act=batch_labels
+            # act.append(batch_labels)
+
+    model.train() # rechange the model mode to training
+
+    return loss,pred,act
+
+
+
+def plot_graph(pred,test):
+    plt.figure(2)
+    pred = pred.reshape(-1, )
+    plt.plot(pred.detach().numpy(), color="lightcoral", marker="o", mfc='r', markersize=5, linewidth=1,
+             label='prediction', linestyle=':')
+    # plt.plot(test.detach().numpy(), color="cornflowerblue", marker="o", mfc='b', markersize=5, linewidth=1,
+    #          label='actual', linestyle=':')
+    plt.legend()
+    plt.show()
+
+def plot_loss(loss):
+    plt.figure(1)
+    t = np.linspace(1,1, np.array(loss).shape[0])
+    plt.plot(np.array(loss), label="MSE of validation data")
+    # test loss curve
+    plt.xlabel('Iterations', fontsize=20)
+    plt.ylabel('MSE', fontsize=20)
+    plt.show()
 def load_subtensor(nfeat, labels, seeds, input_nodes, device):
     """
     Extracts features and labels for a subset of nodes
@@ -119,12 +190,14 @@ def run(args, device, data, checkpoint_path, best_model_path):
     n_classes, train_g, val_g, test_g, train_nfeat, train_labels, \
     val_nfeat, val_labels, test_nfeat, test_labels = data
 
-    in_feats = 10
+    in_feats = 11
+    # in_feats = 11    # round 2
     # in_feats = train_nfeat.shape[0]
 
     train_nid = th.nonzero(train_g.ndata['train_mask'], as_tuple=True)[0]
 
     val_nid = th.nonzero(val_g.ndata['val_mask'], as_tuple=True)[0]
+    test_nid = th.nonzero(test_g.ndata['test_mask'], as_tuple=True)[0]
 
     dataloader_device = th.device('cpu')
 
@@ -168,8 +241,12 @@ def run(args, device, data, checkpoint_path, best_model_path):
     # validata dataloader
     valdataloader = get_dataloader(val_g, val_nid, sampler)
 
+    # testdata dataloader
+    testdataloader = get_dataloader(test_g, test_nid, sampler)
+
     # Training loop
     valid_loss_min = np.Inf
+    loss_training =[]
 
     for epoch in range(args.num_epochs):
 
@@ -195,29 +272,56 @@ def run(args, device, data, checkpoint_path, best_model_path):
             # train_loss = train_loss + ((1 / (step + 1)) * (loss.data - train_loss))
 
         model.eval()
-        train_acc, train_loss = evaluate(model, train_nfeat,train_labels,device, dataloader,loss_fcn)
-        val_acc, valid_loss = evaluate(model, val_nfeat, val_labels,device, valdataloader, loss_fcn)
+        train_loss = evaluate(model, train_nfeat,train_labels,device, dataloader,loss_fcn)
+        val_loss= evaluate(model, val_nfeat, val_labels,device, valdataloader, loss_fcn)
 
-        print('Epoch: {} \tTraining acc: {:.6f} \tValidation acc: {:.6f} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}'.format(
+
+
+        print('Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}'.format(
             epoch,
-            train_acc,
-            val_acc,
             train_loss,
-            valid_loss
+            val_loss
             ))
 
-        checkpoint = {
-            'valid_loss_min': valid_loss,
-            'state_dict': model.state_dict(),
-        }
 
-        save_ckp(checkpoint, False, checkpoint_path, best_model_path)
 
         # TODO: save the model if validation loss has decreased
-        if valid_loss <= valid_loss_min:
-            print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min, valid_loss))
+        if val_loss <= valid_loss_min:
+            checkpoint = {
+                'valid_loss_min': valid_loss_min,
+                'state_dict': model.state_dict(),
+            }
+
+            save_ckp(checkpoint, False, checkpoint_path, best_model_path)
+
+            print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(valid_loss_min, val_loss))
             save_ckp(checkpoint, True, checkpoint_path, best_model_path)
-            valid_loss_min = valid_loss
+            valid_loss_min = val_loss
+            best_model = model
+            loss_training.append(valid_loss_min.detach().numpy())
+
+    # plot_loss(loss_training)
+
+    ########################## Testing ###############################
+
+    # best_model= cnf.modelpath + "\\plctest_6k.pt"
+    #
+    # model, loss_min = load_ckp(best_model, model, optimizer)
+    # model.eval()
+    # model = model.to(device)
+    # loss_fcn = nn.MSELoss()
+    # optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    test_loss,pred,test = test_(best_model, test_nfeat, test_labels, device, testdataloader, loss_fcn)
+    pred_ = pred.numpy()
+    pred_ = pred_.reshape(len(pred))
+
+
+    plt.hist(pred_)
+    plt.show()
+
+    print(pred)
+    plot_graph(pred,test)
+
 
 if __name__ == '__main__':
 
@@ -225,11 +329,11 @@ if __name__ == '__main__':
     argparser.add_argument('--gpu', type=int, default=-1,
                            help="GPU device ID. Use -1 for CPU training")
     argparser.add_argument('--dataset', type=str, default='PLC')
-    argparser.add_argument('--num-epochs', type=int, default= 10)
-    argparser.add_argument('--num-hidden', type=int, default=64)
+    argparser.add_argument('--num-epochs', type=int, default=200)
+    argparser.add_argument('--num-hidden', type=int, default=32)
     argparser.add_argument('--num-layers', type=int, default=2)
-    argparser.add_argument('--fan-out', type=str, default='10,15')
-    argparser.add_argument('--batch-size', type=int, default=140)
+    argparser.add_argument('--fan-out', type=str, default='60,65,65')
+    argparser.add_argument('--batch-size', type=int, default=149)
     argparser.add_argument('--log-every', type=int, default=20)
     argparser.add_argument('--eval-every', type=int, default=5)
     argparser.add_argument('--lr', type=float, default=0.001)
@@ -253,7 +357,7 @@ if __name__ == '__main__':
         device = th.device('cpu')
 
     fileext = "g6k"
-    filepath = cnf.modelpath +'\TBI.pkl'
+    filepath = cnf.modelpath +'\TBI_t1.pkl'
 
     # changes
     if args.dataset == 'PLC':
@@ -294,6 +398,6 @@ if __name__ == '__main__':
     data = n_classes, train_g, val_g, test_g, train_nfeat, train_labels, \
            val_nfeat, val_labels, test_nfeat, test_labels
 
-    run(args, device, data, cnf.modelpath + "\\current_checkpoint.pt", cnf.modelpath + "\\plctest_6k.pt")
+    run(args, device, data, cnf.modelpath + "\\TBI_t1_current_checkpoint_606565.pt", cnf.modelpath + "\\TBI_t1_trained_606565.pt")
 
 

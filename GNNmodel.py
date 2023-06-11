@@ -18,13 +18,23 @@ class SAGE(nn.Module):
         self.n_classes = n_classes
         self.layers = nn.ModuleList()
         if n_layers > 1:
-            self.layers.append(dglnn.SAGEConv(in_feats, n_hidden, 'pool'))
-            for i in range(1, n_layers - 1):
-                self.layers.append(dglnn.SAGEConv(n_hidden, n_hidden, 'pool'))
-            self.layers.append(dglnn.SAGEConv(n_hidden, n_classes, 'pool'))
-        else:
-            self.layers.append(dglnn.SAGEConv(in_feats, n_classes, 'pool'))
+            self.layers.append(dglnn.SAGEConv(in_feats, 64, 'pool'))
+            self.layers.append(dglnn.SAGEConv(64, 32, 'pool'))
+            self.layers.append(dglnn.SAGEConv(32, 16, 'pool'))
 
+            # for i in range(1, n_layers - 1):
+            #     self.layers.append(dglnn.SAGEConv(n_hidden, n_hidden, 'pool'))
+            # self.layers.append(dglnn.SAGEConv(n_hidden, n_classes, 'pool'))
+        # else:
+        #     self.layers.append(dglnn.SAGEConv(in_feats, n_classes, 'pool'))
+
+        self.regression =  nn.Sequential(
+                                    nn.Linear(16,1),
+                                    nn.Softmax(),
+                                    # nn.Linear(24, 1),
+                                    # nn.Sigmoid()
+
+                                )
         self.dropout = nn.Dropout(dropout)
         self.activation = activation
 
@@ -35,6 +45,7 @@ class SAGE(nn.Module):
             if l != len(self.layers) - 1:
                 h = self.activation(h)
                 h = self.dropout(h)
+        h = self.regression(h)
         return h
 
     def inference(self, g, x, device, batch_size, num_workers):
