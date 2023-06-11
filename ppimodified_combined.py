@@ -28,7 +28,7 @@ df =pd.read_csv('string_interactions_short_combined.tsv',sep='\t')
 
 
 # feat = pd.read_csv(cnf.datapath+'tbi_r2_t1_norm.csv')
-feat = pd.read_csv(cnf.datapath+'tbi_comb_norm_t1_alt.csv')
+feat = pd.read_csv(cnf.datapath+'tbi_comb_norm_t1.csv')
 
 
 
@@ -40,7 +40,7 @@ feat = pd.read_csv(cnf.datapath+'tbi_comb_norm_t1_alt.csv')
 # list4 = np.unique(list3)
 # list4 = np.unique(list3).tolist()
 list4 = feat["name"].values.tolist()
-id_list =np.arange(149).tolist()
+id_list =np.arange(232).tolist()
 
 
 
@@ -64,7 +64,7 @@ G = nx.from_pandas_edgelist(df_mapped,'node1','node2', edge_attr='combined_score
 # i = 0
 for v in G.nodes():
     u = mapping_proteins.iloc[np.where(v==mapping_proteins.id)[0],0].to_numpy()[0]
-    G.nodes[v]['feature'] =  feat.iloc[np.where(u==feat.name)[0],1:12].to_numpy()
+    G.nodes[v]['feature'] =  feat.iloc[np.where(u==feat.name)[0],1:23].to_numpy()
 
     # G.nodes[u]['node_id'] = i
     # i = i+1
