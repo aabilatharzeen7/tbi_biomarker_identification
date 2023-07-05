@@ -1,3 +1,4 @@
+
 import dgl
 import numpy as np
 import torch as th
@@ -25,7 +26,7 @@ class PLCgraphDataset(DGLDataset):
         self.graph = dgl.from_networkx(g, node_attrs=['feature','label'])
         self.graph.ndata['feat'] = self.graph.ndata['feature']
         self.graph.ndata['label'] = self.graph.ndata['label']
-        n_nodes= 149 # combined
+        n_nodes= g.number_of_nodes() # combined
         # n_nodes= 196 # round 2
         # n_nodes= 206  # round 1
 
@@ -114,3 +115,4 @@ def inductive_split(g):
     # val_g = g.subgraph(g.ndata['train_mask'] | g.ndata['val_mask'])
     test_g = g.subgraph(g.ndata['test_mask'])
     return train_g, val_g, test_g
+

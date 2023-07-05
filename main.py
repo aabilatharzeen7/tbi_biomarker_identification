@@ -1,3 +1,4 @@
+
 import dgl
 import numpy as np
 import torch as th
@@ -190,7 +191,7 @@ def run(args, device, data, checkpoint_path, best_model_path):
     n_classes, train_g, val_g, test_g, train_nfeat, train_labels, \
     val_nfeat, val_labels, test_nfeat, test_labels = data
 
-    in_feats = 11
+    in_feats = 22
     # in_feats = 11    # round 2
     # in_feats = train_nfeat.shape[0]
 
@@ -399,5 +400,7 @@ if __name__ == '__main__':
            val_nfeat, val_labels, test_nfeat, test_labels
 
     run(args, device, data, cnf.modelpath + "\\TBI_t1_current_checkpoint_606565.pt", cnf.modelpath + "\\TBI_t1_trained_606565.pt")
+
+
 
 

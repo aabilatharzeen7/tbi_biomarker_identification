@@ -1,3 +1,4 @@
+
 import dgl
 import numpy as np
 import torch as th
@@ -203,5 +204,6 @@ if __name__ == '__main__':
     data = n_classes, test_g,test_nfeat, test_labels
     trained_model_path = cnf.modelpath + "\\TBI_t6_trained_556065.pt"
     run(args, device, data,trained_model_path)
+
 
 
